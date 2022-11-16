@@ -1,0 +1,235 @@
+xpress-analyzer
+
+This package is a suite of programs that I have been developing while
+analyzing functional genomics data in the Bioinformatics group at
+BMS. For installation instructions please look for the INSTALL section
+in this file.
+
+You can contact me at isaac.neuhaus@bms.com or neuhausi@comcast.net
+
+The current programs include:
+
+ 1. anova: Analysis of Variance
+ 2. correct: Multiple test correction for significant tests
+ 3. fit: Non-linear least square fitting algorithm (four parameters)
+ 4. glm: General Linear Models
+ 5. ks: Kolmogorov-Smirnov distance
+ 6. nna: Nearest Neighbor Algorithm
+ 7. pca: Principal Component Analysis
+ 8. ttest: Student's t-test
+
+A large number of subroutines were adapted from Numerical Recipes in
+C, W H. Press et al., 1988. The main difference is that the one-based
+arrays used in Numerical Recipes were transformed into zero-based
+arrays.
+
+My motivation writing these programs was partially based on the fact
+that it was frustrating running large number of tests in open source
+statistical packages like R since it usually took a long time. In
+addition, I also took this opportunity to learn how the algorithms
+work and in fact the GLM code included in this package is the only one
+where people can learn how the analysis of variance is calculated even
+in the most troublesome experimental designs (like empty cells with
+missing treatment combinations). By using the debugging mode people
+can learn the matrix manipulations that other very expensive pieces of
+software use to calculate type III sum of squares.
+
+Many people at BMS helped me during this process including: Robert
+Bruccoleri (who also is the co-author of nna), Carlos Rios, John
+Hinsdale, Mark Friedrichs, Nathan Siemers and Frank Starmer at Duke
+University who helped me directly and indirectly through his
+publication "The Joy of Learning. Main Ideas, Scaffolding, and
+Thinking: building new concepts by modeling: HOWTO"
+(http://frank.itlab.us/datamodel/).
+
+These programs come with help instructions and can be run using simple
+commands that mainly identify one or many files and the various
+parameters. For example the glm algorithm is run like this:
+
+  glm -d datafile -f factorfile -m Grp1 -m Grp2 -m Grp3
+
+For help running any program, just provide the -h switch. Some
+programs can be run also in verbose mode with the switch -v or in
+debug mode with the switch -D; (run glm with -D and you'll learn about
+all matrices used in the calculations; trust me it is cool!). For
+example,
+
+  pca -h
+
+  anova -d datafile -f factorfile -t mixed -v
+
+  glm -d datafile -f factorfile -m Grp1 -m Grp2 -m Grp3 -D
+
+The files contain either the data for the variables or the class
+information for the samples. The format of these files is very simple
+and can be created or viewed using any text editor. As noted before,
+all the programs come with the examples files (in another tar file)
+and I recommend to see them before using these programs. Nevertheless,
+I will elaborate a little bit more on the format of these files.
+
+DATA files: 
+
+The header of the data file contain the name of the samples separated
+by a TAB. The first column is either empty (just a TAB) or in any case
+will be skipped when reading the file. The following lines (one or
+many, many, more) are the response data that will be used for the
+analyses, which are also separated by a TAB. The first column
+identifies the name of the variable followed by its data. For example:
+
+	Sample1 Sample2 Sample3 Sample4 Sample5 Sample6
+Gene1	12	13	14	21	23	24
+Gene2	22	33	44	31	33	34
+Gene3	32	53	74	41	NA	44
+
+Missing data is identified by 'NA' (see the data for Gene3 in
+Sample5).
+
+FACTOR, COVARIATE and FILTER files:
+
+In many programs the columns in the data files need to be associated
+with a particular annotation. For example in a GLM analysis, we need
+to specify in a factor file the class to which each sample belongs
+to. In order to do so, we need that the header of this file matches
+exactly that one in the data file so we can identify the
+classification for the samples. The following lines in the file (also
+one or many, many, more) will be similar to the data file but in this
+case it will contain the annotation for the samples. The first column
+will be used to identify the annotation name (in the statistical lingo
+this is called the factor), and the following columns will contain the
+class for each sample, (in statistics that is called the level to
+which the sample belongs to). For example:
+
+	Sample1 Sample2 Sample3 Sample4 Sample5 Sample6
+Comp	 Cnt	Cnt	Cnt	Trt	Trt	Trt		
+Dose	0	0	0	10	20	30
+Time	0	20	40	0	20	Unassigned
+
+Samples with missing annotation are identified by 'Unassigned' (see
+Time on Sample6). Covariate files are similar to the example above,
+the only difference is that the classification will be treated as
+continuous in the covariate files and discrete in the factor files.
+
+DATA files for KS analysis: 
+
+The only exception for the this format in the data files is the one
+used for the ks analysis. In that case, the data file is transposed,
+that is, the header contains the descriptors that will be used for the
+analysis. Similarly the first column is either empty or will be
+skipped followed by one or more descriptors. The following lines
+contains the distributions for each descriptor. The first column will
+contain the class for the distribution followed by the values. (This
+was done so you don't end up with a file with millions of columns that
+you cannot even see with excel, if you know what I mean). For example:
+
+	Size	Area
+A1.1	2	12
+A1.2	2.1	12.3
+A1.3	1.7	23
+A1.4	2.6	23.3
+...
+A2.1	3	34
+A2.2	3.1	30
+A2.3	2.7	40
+...
+
+INSTALL
+
+To install analyzer
+
+1. unpack the tar file(s) (which you already did). There is one tar file
+   for the source code and another tar file for the examples.
+ 
+   % gunzip -c analyzer_MM_DD_YY.tar.gz | tar -xvf	
+   % gunzip -c analyzer_MM_DD_YY_t.tar.gz | tar -xvf	
+
+2. cd to the directory analyzer
+
+   % cd analyzer
+
+3. run make
+
+   % make
+
+This will create all the executables in the current directory
+
+4. run the tests if you downloaded the tar file with the tests
+
+   % make test
+
+In some cases there might be some approximation errors that may appear
+when running some tests.
+
+5. install the programs 
+
+   % make install
+
+This will copy the programs from the current directory to the
+destination directory which is ./bin by default. If you want to
+install the program in a different directory you either need to edit
+the makefile or specify it in the command line. For example:
+
+   % make -e DESTDIR=/usr/local/bin install
+
+Similarly if you want to modify any of the parameters in the makefile
+you can either include them in the command line or edit the makefile.
+Another example would be if you want to compile the programs using a
+different compiler (for instance, icc in an altix machine).
+
+   % make -e CC=icc
+
+Other targets in the makefile are designed to create tar files
+
+   % make archive
+
+This will create two tar files:
+
+   1. analyzer_dd_mm_yy.tar file
+   2. analyzer_dd_mm_yy_t.tar file
+
+One with the source code and another with the tests. (dd is day, mm is
+the month and yy is the year)
+
+OTHER STUFF
+
+To profile code make it as follows:
+
+   % make -e CFLAGS =-Wall -g -pg
+
+and then run gprof. For example:
+
+   % gprof nna gmon.out
+
+KNOWN ISSUES
+
+1. Files created in windows have an end of line character, (^M), which
+causes the program to make the last column in every factor to be
+different to any other because of this character and thus producing
+bogus results. The solution to this problem is not to use windows.
+
+2. Making the programs with the CFLAGS = -O in an altix system cause
+trouble.  I need to follow up on this bug but given that SGI does not
+seem to be doing well, I doubt I will get to it.
+
+REQUEST FOR FEEDBACK
+
+Please report bugs and let me know if you want to participate being a developer.
+
+Isaac M. Neuhaus, Ph.D
+Group Leader
+Bioinformatics
+Bristol Myers Squibb Co.
+
+isaac.neuhaus@bms.com or neuhausi@comcast.net
+
+FOR SOURCEFORGE
+
+cd to the analyzer directory
+
+setenv CVS_RSH ssh
+## To import
+cvs -d:ext:neuhausi@xpress-analyzer.cvs.sourceforge.net:/cvsroot/xpress-analyzer import analyzer isaac initial
+# To checkout
+cvs -d:ext:neuhausi@xpress-analyzer.cvs.sourceforge.net:/cvsroot/xpress-analyzer co analyzer
+# To commit
+cvs -d:ext:neuhausi@xpress-analyzer.cvs.sourceforge.net:/cvsroot/xpress-analyzer commit analyzer
+### etc, etc, etc
